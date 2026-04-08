@@ -65,33 +65,33 @@ class MainWindow(QWidget):
             }
 
             QGroupBox#leftPanelGroup::title {
-                font-size: 18px;
+                font-size: 28px;
             }
 
             QLabel#hintLabel {
                 color: #64748b;
-                font-size: 16px;
-                padding-bottom: 4px;
+                font-size: 24px;
+                padding-bottom: 8px;
             }
 
             QLabel#valueBox {
                 background-color: #ffffff;
                 border: 1px solid #cfd8e3;
-                border-radius: 8px;
-                padding: 8px 10px;
+                border-radius: 10px;
+                padding: 18px 20px;
                 color: #0f172a;
-                font-size: 17px;
-                font-weight: 600;
-                min-height: 18px;
+                font-size: 26px;
+                font-weight: 700;
+                min-height: 44px;
             }
 
             QLabel#statusBox {
                 background-color: #fff7ed;
                 border: 1px solid #fdba74;
                 border-radius: 10px;
-                padding: 14px;
+                padding: 22px;
                 color: #c2410c;
-                font-size: 18px;
+                font-size: 28px;
                 font-weight: 700;
             }
 
@@ -105,11 +105,40 @@ class MainWindow(QWidget):
                 min-height: 28px;
             }
 
+            QSpinBox#temperatureInput {
+                background-color: #f8fbff;
+                border: 2px solid #93c5fd;
+                border-radius: 12px;
+                padding: 18px 20px;
+                color: #0f172a;
+                font-size: 38px;
+                font-weight: 700;
+                selection-background-color: #2563eb;
+                selection-color: #ffffff;
+            }
+
+            QSpinBox#temperatureInput:focus {
+                border: 2px solid #2563eb;
+                background-color: #ffffff;
+            }
+
+            QSpinBox#temperatureInput::up-button,
+            QSpinBox#temperatureInput::down-button {
+                width: 42px;
+                border-left: 1px solid #bfdbfe;
+                background-color: #eff6ff;
+            }
+
+            QSpinBox#temperatureInput::up-button:hover,
+            QSpinBox#temperatureInput::down-button:hover {
+                background-color: #dbeafe;
+            }
+
             QPushButton {
                 border: none;
                 border-radius: 10px;
-                padding: 12px;
-                font-size: 17px;
+                padding: 18px;
+                font-size: 24px;
                 font-weight: 700;
             }
 
@@ -166,8 +195,12 @@ class MainWindow(QWidget):
         content_layout = QHBoxLayout()
         content_layout.setSpacing(16)
 
-        left_panel = QVBoxLayout()
+        left_panel_widget = QWidget()
+        left_panel_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        left_panel = QVBoxLayout(left_panel_widget)
         left_panel.setSpacing(14)
+        left_panel.setContentsMargins(0, 0, 0, 0)
 
         # Bloc consigne
         setpoint_group = QGroupBox("Réglage de la consigne")
@@ -179,8 +212,10 @@ class MainWindow(QWidget):
         hint_label.setObjectName("hintLabel")
 
         self.temperature_input = QSpinBox()
+        self.temperature_input.setObjectName("temperatureInput")
         self.temperature_input.setRange(0, 100)
         self.temperature_input.setValue(25)
+        self.temperature_input.setAlignment(Qt.AlignCenter)
         self.temperature_input.setSuffix(" °C")
 
         self.submit_temperature_button = QPushButton("Appliquer la consigne")
@@ -190,7 +225,7 @@ class MainWindow(QWidget):
         setpoint_layout.addWidget(self.temperature_input)
         setpoint_layout.addWidget(self.submit_temperature_button)
         setpoint_group.setLayout(setpoint_layout)
-        setpoint_group.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        setpoint_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
         # Bloc mesures
         info_group = QGroupBox("Mesures instantanées")
@@ -213,7 +248,7 @@ class MainWindow(QWidget):
         info_layout.addWidget(self.voltage_label)
         info_layout.addWidget(self.power_label)
         info_group.setLayout(info_layout)
-        info_group.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        info_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
         # Bloc commandes
         button_group = QGroupBox("Actions système")
@@ -233,7 +268,7 @@ class MainWindow(QWidget):
         button_layout.addWidget(self.start_button)
         button_layout.addWidget(self.stop_button)
         button_group.setLayout(button_layout)
-        button_group.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        button_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
         # Bloc état
         status_group = QGroupBox("État du système")
@@ -246,13 +281,14 @@ class MainWindow(QWidget):
 
         status_layout.addWidget(self.status_label)
         status_group.setLayout(status_layout)
-        status_group.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        status_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
         left_panel.addWidget(setpoint_group)
         left_panel.addWidget(info_group)
         left_panel.addWidget(button_group)
         left_panel.addWidget(status_group)
         left_panel.addStretch()
+        left_panel_widget.setMinimumWidth(380)
 
         # Zone graphes
         plots_group = QGroupBox("Visualisation en temps réel")
@@ -277,41 +313,41 @@ class MainWindow(QWidget):
 
         plots_group.setLayout(plots_layout)
 
-        content_layout.addLayout(left_panel, 1)
-        content_layout.addWidget(plots_group, 3)
+        content_layout.addWidget(left_panel_widget, 2)
+        content_layout.addWidget(plots_group, 5)
 
         main_layout.addLayout(content_layout)
         self.setLayout(main_layout)
         self._apply_left_panel_fonts()
 
     def _apply_left_panel_fonts(self) -> None:
-        scale = max(1.0, min(1.45, self.width() / 1450))
+        scale = max(1.15, min(1.7, self.width() / 1300))
 
-        group_title_font = QFont("Segoe UI", int(14 * scale), QFont.Bold)
-        hint_font = QFont("Segoe UI", int(12 * scale))
-        input_font = QFont("Segoe UI", int(13 * scale))
-        value_font = QFont("Segoe UI", int(12 * scale), QFont.DemiBold)
-        button_font = QFont("Segoe UI", int(12 * scale), QFont.Bold)
-        status_font = QFont("Segoe UI", int(13 * scale), QFont.Bold)
+        group_title_font = QFont("Segoe UI", int(20 * scale), QFont.Bold)
+        hint_font = QFont("Segoe UI", int(18 * scale))
+        input_font = QFont("Segoe UI", int(28 * scale), QFont.Bold)
+        value_font = QFont("Segoe UI", int(18 * scale), QFont.Bold)
+        button_font = QFont("Segoe UI", int(17 * scale), QFont.Bold)
+        status_font = QFont("Segoe UI", int(19 * scale), QFont.Bold)
 
         self.temperature_input.setFont(input_font)
-        self.temperature_input.setMinimumHeight(int(42 * scale))
+        self.temperature_input.setMinimumHeight(int(92 * scale))
 
         self.submit_temperature_button.setFont(button_font)
-        self.submit_temperature_button.setMinimumHeight(int(42 * scale))
+        self.submit_temperature_button.setMinimumHeight(int(62 * scale))
         self.connect_button.setFont(button_font)
-        self.connect_button.setMinimumHeight(int(42 * scale))
+        self.connect_button.setMinimumHeight(int(62 * scale))
         self.start_button.setFont(button_font)
-        self.start_button.setMinimumHeight(int(42 * scale))
+        self.start_button.setMinimumHeight(int(62 * scale))
         self.stop_button.setFont(button_font)
-        self.stop_button.setMinimumHeight(int(42 * scale))
+        self.stop_button.setMinimumHeight(int(62 * scale))
 
         self.temperature_label.setFont(value_font)
         self.resistance_label.setFont(value_font)
         self.voltage_label.setFont(value_font)
         self.power_label.setFont(value_font)
         self.status_label.setFont(status_font)
-        self.status_label.setMinimumHeight(int(48 * scale))
+        self.status_label.setMinimumHeight(int(78 * scale))
 
         for label in self.findChildren(QLabel, "hintLabel"):
             label.setFont(hint_font)
@@ -328,9 +364,11 @@ class MainWindow(QWidget):
         plot_widget = pg.PlotWidget()
         plot_widget.setBackground("#ffffff")
         plot_widget.setMinimumHeight(285)
+        plot_item = plot_widget.getPlotItem()
+        plot_item.layout.setContentsMargins(12, 28, 12, 12)
 
         plot_widget.setTitle(
-            f"<span style='color:#0f172a; font-size:18pt; font-weight:700;'>{title}</span>"
+            f"<span style='color:#0f172a; font-size:16pt; font-weight:700;'>{title}</span>"
         )
 
         plot_widget.setLabel("left", label, units=unit, color="#475569")
@@ -348,6 +386,6 @@ class MainWindow(QWidget):
         left_axis.setStyle(tickFont=pg.Qt.QtGui.QFont("Segoe UI", 11))
         bottom_axis.setStyle(tickFont=pg.Qt.QtGui.QFont("Segoe UI", 11))
 
-        plot_widget.getPlotItem().getViewBox().setBorder(pg.mkPen("#dbe3ef"))
+        plot_item.getViewBox().setBorder(pg.mkPen("#dbe3ef"))
 
         return plot_widget
