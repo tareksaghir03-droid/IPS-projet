@@ -2,6 +2,12 @@ from PyQt5.QtCore import QObject, QTimer
 import time
 
 
+CURRENT_MIN_MA = 4.0
+CURRENT_MAX_MA = 20.0
+TEMPERATURE_MIN_C = 0.0
+TEMPERATURE_MAX_C = 100.0
+
+
 class Controller(QObject):
     def __init__(self, window, serial_manager):
         super().__init__()
@@ -14,9 +20,8 @@ class Controller(QObject):
 
         self.time_data = []
         self.temperature_data = []
-        self.resistance_data = []
-        self.voltage_data = []
         self.power_data = []
+        self.current_data = []
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.read_data)
@@ -76,21 +81,22 @@ class Controller(QObject):
             if values is None:
                 return
 
-            temperature, resistance, voltage, power = values
+            power, current = values
+            temperature = self.calculate_temperature_from_current(current)
             current_time = time.time() - self.start_time
 
             self.time_data.append(current_time)
             self.temperature_data.append(temperature)
-            self.resistance_data.append(resistance)
-            self.voltage_data.append(voltage)
             self.power_data.append(power)
+            self.current_data.append(current)
 
             self.keep_last_values(200)
 
-            self.window.temperature_label.setText(f"Température : {temperature:.2f} °C")
-            self.window.resistance_label.setText(f"Résistance : {resistance:.2f} Ω")
-            self.window.voltage_label.setText(f"Tension : {voltage:.2f} V")
+            self.window.temperature_label.setText(
+                f"Température calculée : {temperature:.2f} °C"
+            )
             self.window.power_label.setText(f"Puissance : {power:.2f} W")
+            self.window.current_label.setText(f"Courant : {current:.2f} mA")
 
             self.update_graphs()
 
@@ -100,38 +106,44 @@ class Controller(QObject):
     def parse_data(self, line):
         """
         Format attendu depuis STM32 :
-        temperature;resistance;voltage;power
+        power;current
 
         Exemple :
-        25.4;120.5;3.12;0.08
+        12.5;8.2
         """
 
         try:
             line = line.strip()
             parts = line.split(";")
 
-            if len(parts) != 4:
+            if len(parts) != 2:
                 return None
 
-            temperature = float(parts[0])
-            resistance = float(parts[1])
-            voltage = float(parts[2])
-            power = float(parts[3])
+            power = float(parts[0])
+            current = float(parts[1])
 
-            return temperature, resistance, voltage, power
+            return power, current
 
         except ValueError:
             return None
 
+    def calculate_temperature_from_current(self, current_ma):
+        current_span = CURRENT_MAX_MA - CURRENT_MIN_MA
+        temperature_span = TEMPERATURE_MAX_C - TEMPERATURE_MIN_C
+
+        if current_span == 0:
+            return TEMPERATURE_MIN_C
+
+        ratio = (current_ma - CURRENT_MIN_MA) / current_span
+        return TEMPERATURE_MIN_C + ratio * temperature_span
+
     def update_graphs(self):
         self.window.temperature_curve.setData(self.time_data, self.temperature_data)
-        self.window.resistance_curve.setData(self.time_data, self.resistance_data)
-        self.window.voltage_curve.setData(self.time_data, self.voltage_data)
         self.window.power_curve.setData(self.time_data, self.power_data)
+        self.window.current_curve.setData(self.time_data, self.current_data)
 
     def keep_last_values(self, max_points):
         self.time_data = self.time_data[-max_points:]
         self.temperature_data = self.temperature_data[-max_points:]
-        self.resistance_data = self.resistance_data[-max_points:]
-        self.voltage_data = self.voltage_data[-max_points:]
         self.power_data = self.power_data[-max_points:]
+        self.current_data = self.current_data[-max_points:]

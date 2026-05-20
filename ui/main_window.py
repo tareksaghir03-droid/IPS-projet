@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-import pyqtgraph as pg
+import pyqtgraph as  pg
 
 
 class MainWindow(QWidget):
@@ -183,7 +183,7 @@ class MainWindow(QWidget):
         title_label.setAlignment(Qt.AlignCenter)
 
         subtitle_label = QLabel(
-            "Suivi en temps réel de la température, de la résistance, de la tension et de la puissance"
+            "Suivi en temps réel de la puissance, du courant et de la température calculée"
         )
         subtitle_label.setObjectName("subtitleLabel")
         subtitle_label.setAlignment(Qt.AlignCenter)
@@ -233,20 +233,17 @@ class MainWindow(QWidget):
         info_layout = QVBoxLayout()
         info_layout.setSpacing(8)
 
-        self.temperature_label = QLabel("Température : -- °C")
-        self.resistance_label = QLabel("Résistance : -- Ω")
-        self.voltage_label = QLabel("Tension : -- V")
+        self.temperature_label = QLabel("Température calculée : -- °C")
         self.power_label = QLabel("Puissance : -- W")
+        self.current_label = QLabel("Courant : -- mA")
 
         self.temperature_label.setObjectName("valueBox")
-        self.resistance_label.setObjectName("valueBox")
-        self.voltage_label.setObjectName("valueBox")
         self.power_label.setObjectName("valueBox")
+        self.current_label.setObjectName("valueBox")
 
         info_layout.addWidget(self.temperature_label)
-        info_layout.addWidget(self.resistance_label)
-        info_layout.addWidget(self.voltage_label)
         info_layout.addWidget(self.power_label)
+        info_layout.addWidget(self.current_label)
         info_group.setLayout(info_layout)
         info_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
@@ -296,20 +293,21 @@ class MainWindow(QWidget):
         plots_layout.setHorizontalSpacing(14)
         plots_layout.setVerticalSpacing(14)
 
-        self.temperature_plot = self._create_plot_widget("Température", "Température", "°C")
-        self.resistance_plot = self._create_plot_widget("Résistance", "Résistance", "kΩ")
-        self.voltage_plot = self._create_plot_widget("Tension", "Tension", "V")
+        self.temperature_plot = self._create_plot_widget(
+            "Température calculée", "Température", "°C"
+        )
         self.power_plot = self._create_plot_widget("Puissance", "Puissance", "W")
+        self.current_plot = self._create_plot_widget("Courant", "Courant", "mA")
 
         self.temperature_curve = self.temperature_plot.plot([], [], pen=pg.mkPen("#dc2626", width=2))
-        self.resistance_curve = self.resistance_plot.plot([], [], pen=pg.mkPen("#d97706", width=2))
-        self.voltage_curve = self.voltage_plot.plot([], [], pen=pg.mkPen("#2563eb", width=2))
-        self.power_curve = self.power_plot.plot([], [], pen=pg.mkPen("#059669", width=2))
+        self.power_curve = self.power_plot.plot(
+            [], [], pen=pg.mkPen("#d97706", width=2)
+        )
+        self.current_curve = self.current_plot.plot([], [], pen=pg.mkPen("#2563eb", width=2))
 
         plots_layout.addWidget(self.temperature_plot, 0, 0)
-        plots_layout.addWidget(self.resistance_plot, 0, 1)
-        plots_layout.addWidget(self.voltage_plot, 1, 0)
-        plots_layout.addWidget(self.power_plot, 1, 1)
+        plots_layout.addWidget(self.power_plot, 0, 1)
+        plots_layout.addWidget(self.current_plot, 1, 0, 1, 2)
 
         plots_group.setLayout(plots_layout)
 
@@ -343,9 +341,8 @@ class MainWindow(QWidget):
         self.stop_button.setMinimumHeight(int(62 * scale))
 
         self.temperature_label.setFont(value_font)
-        self.resistance_label.setFont(value_font)
-        self.voltage_label.setFont(value_font)
         self.power_label.setFont(value_font)
+        self.current_label.setFont(value_font)
         self.status_label.setFont(status_font)
         self.status_label.setMinimumHeight(int(78 * scale))
 
