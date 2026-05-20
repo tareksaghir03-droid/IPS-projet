@@ -1,38 +1,58 @@
 import serial
 import serial.tools.list_ports
 
+
 class SerialManager:
-    def __init__(self, port="COM3", baudrate=115200):
-        self.port = port
+    def __init__(self, baudrate=115200):
         self.baudrate = baudrate
-        self.serial = None
+        self.serial_port = None
 
-    def connect(self):
-        """Open UART communication"""
-        try:
-            self.serial = serial.Serial(self.port, self.baudrate, timeout=1)
-            print(f"Connected to {self.port} at {self.baudrate} baud.")
-            return True
-        except Exception as e:
-            print("UART Error:", e)
-            return False
+    def find_port(self):
+        ports = list(serial.tools.list_ports.comports())
 
-    def disconnect(self):
-        if self.serial and self.serial.is_open:
-            self.serial.close()
+        for port in ports:
+            desc = port.description.lower()
 
-    def available_ports(self):
-        """List COM ports"""
-        return [p.device for p in serial.tools.list_ports.comports()]
+            if (
+                "stlink" in desc
+                or "stm" in desc
+                or "nucleo" in desc
+                or "usb serial" in desc
+                or "com" in port.device.lower()
+            ):
+                return port.device
 
-    def send(self, data: str):
-        if self.serial and self.serial.is_open:
-            self.serial.write((data + "\n").encode())
+        return None
+
+    def connect(self, port=None):
+        if port is None:
+            port = self.find_port()
+
+        if port is None:
+            raise Exception("Aucun port série trouvé")
+
+        self.serial_port = serial.Serial(
+            port=port,
+            baudrate=self.baudrate,
+            timeout=0.1
+        )
+
+    def is_connected(self):
+        return self.serial_port is not None and self.serial_port.is_open
 
     def read_line(self):
-        if self.serial and self.serial.is_open:
-            try:
-                return self.serial.readline().decode().strip()
-            except:
-                return ""
-        return ""
+        if not self.is_connected():
+            return ""
+
+        line = self.serial_port.readline().decode("utf-8", errors="ignore")
+        return line.strip()
+
+    def send(self, message):
+        if not self.is_connected():
+            raise Exception("Port série non connecté")
+
+        self.serial_port.write(message.encode("utf-8"))
+
+    def close(self):
+        if self.is_connected():
+            self.serial_port.close()
