@@ -20,9 +20,12 @@ class Controller(QObject):
         self.start_time = time.time()
 
         self.time_data = []
+        self.setpoint_data = []
         self.temperature_data = []
+        self.voltage_data = []
         self.power_data = []
         self.current_data = []
+        self.pwm_data = []
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.read_data)
@@ -135,15 +138,24 @@ class Controller(QObject):
             if values is None:
                 return
 
-            temperature, current, power = values
-
-            current_time = time.time() - self.start_time
+            (
+                current_time,
+                setpoint,
+                temperature,
+                voltage,
+                current,
+                power,
+                pwm,
+            ) = values
 
             # stockage données
             self.time_data.append(current_time)
+            self.setpoint_data.append(setpoint)
             self.temperature_data.append(temperature)
+            self.voltage_data.append(voltage)
             self.power_data.append(power)
             self.current_data.append(current)
+            self.pwm_data.append(pwm)
 
             self.keep_last_values(200)
 
@@ -156,9 +168,11 @@ class Controller(QObject):
                 f"Puissance : {power:.2f} W"
             )
 
-            self.window.current_label.setText(
-                f"Courant : {current * 1000:.1f} mA"
+            self.window.voltage_label.setText(
+                f"Tension : {voltage:.3f} V"
             )
+
+            self.window.temperature_setpoint_line.setValue(setpoint)
 
             # update graphes
             self.update_graphs()
@@ -176,6 +190,15 @@ class Controller(QObject):
     def parse_data(self, line):
 
         try:
+            line = line.strip()
+
+            if not line or line.lower().startswith("time_s"):
+                return None
+
+            csv_values = self.parse_csv_data(line)
+
+            if csv_values is not None:
+                return csv_values
 
             data = {}
 
@@ -208,10 +231,33 @@ class Controller(QObject):
             temperature = data["Temp"]
             current = data["I"]
             power = data["P"]
+            current_time = time.time() - self.start_time
+            setpoint = self.window.temperature_input.value()
+            voltage = 0.0
+            pwm = 0.0
 
-            return temperature, current, power
+            return (
+                current_time,
+                setpoint,
+                temperature,
+                voltage,
+                current,
+                power,
+                pwm,
+            )
 
         except:
+            return None
+
+    def parse_csv_data(self, line):
+        parts = [part.strip() for part in line.split(",")]
+
+        if len(parts) != 7:
+            return None
+
+        try:
+            return tuple(float(part) for part in parts)
+        except ValueError:
             return None
 
     # =========================================================
@@ -260,9 +306,9 @@ class Controller(QObject):
             self.power_data
         )
 
-        self.window.current_curve.setData(
+        self.window.voltage_curve.setData(
             self.time_data,
-            self.current_data
+            self.voltage_data
         )
 
     # =========================================================
@@ -273,8 +319,16 @@ class Controller(QObject):
 
         self.time_data = self.time_data[-max_points:]
 
+        self.setpoint_data = (
+            self.setpoint_data[-max_points:]
+        )
+
         self.temperature_data = (
             self.temperature_data[-max_points:]
+        )
+
+        self.voltage_data = (
+            self.voltage_data[-max_points:]
         )
 
         self.power_data = (
@@ -283,4 +337,8 @@ class Controller(QObject):
 
         self.current_data = (
             self.current_data[-max_points:]
+        )
+
+        self.pwm_data = (
+            self.pwm_data[-max_points:]
         )
