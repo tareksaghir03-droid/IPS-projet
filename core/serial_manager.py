@@ -32,8 +32,8 @@ class SerialManager:
             raise Exception("Aucun port série trouvé")
 
         self.serial_port = serial.Serial(
-            port=port,
-            baudrate=self.baudrate,
+            port="COM6",
+            baudrate=115200,
             timeout=0.1
         )
 

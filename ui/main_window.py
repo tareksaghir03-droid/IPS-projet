@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-import pyqtgraph as  pg
+import pyqtgraph as pg
 
 
 class MainWindow(QWidget):
@@ -183,7 +183,7 @@ class MainWindow(QWidget):
         title_label.setAlignment(Qt.AlignCenter)
 
         subtitle_label = QLabel(
-            "Suivi en temps réel de la puissance, du courant et de la température calculée"
+            "Suivi en temps réel de la puissance, de la tension et de la température calculée"
         )
         subtitle_label.setObjectName("subtitleLabel")
         subtitle_label.setAlignment(Qt.AlignCenter)
@@ -235,15 +235,15 @@ class MainWindow(QWidget):
 
         self.temperature_label = QLabel("Température calculée : -- °C")
         self.power_label = QLabel("Puissance : -- W")
-        self.current_label = QLabel("Courant : -- mA")
+        self.voltage_label = QLabel("Tension : -- V")
 
         self.temperature_label.setObjectName("valueBox")
         self.power_label.setObjectName("valueBox")
-        self.current_label.setObjectName("valueBox")
+        self.voltage_label.setObjectName("valueBox")
 
         info_layout.addWidget(self.temperature_label)
         info_layout.addWidget(self.power_label)
-        info_layout.addWidget(self.current_label)
+        info_layout.addWidget(self.voltage_label)
         info_group.setLayout(info_layout)
         info_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
@@ -297,17 +297,32 @@ class MainWindow(QWidget):
             "Température calculée", "Température", "°C"
         )
         self.power_plot = self._create_plot_widget("Puissance", "Puissance", "W")
-        self.current_plot = self._create_plot_widget("Courant", "Courant", "mA")
+        self.voltage_plot = self._create_plot_widget("Tension", "Tension", "V")
 
         self.temperature_curve = self.temperature_plot.plot([], [], pen=pg.mkPen("#dc2626", width=2))
+        self.temperature_setpoint_line = pg.InfiniteLine(
+            pos=self.temperature_input.value(),
+            angle=0,
+            movable=False,
+            pen=pg.mkPen("#111827", width=2, style=Qt.DashLine),
+            label="Consigne {value:.0f} °C",
+            labelOpts={
+                "position": 0.92,
+                "color": "#111827",
+                "fill": "#f8fafc",
+            },
+        )
+        self.temperature_plot.addItem(self.temperature_setpoint_line)
+        self.temperature_input.valueChanged.connect(self.update_temperature_setpoint_line)
+
         self.power_curve = self.power_plot.plot(
             [], [], pen=pg.mkPen("#d97706", width=2)
         )
-        self.current_curve = self.current_plot.plot([], [], pen=pg.mkPen("#2563eb", width=2))
+        self.voltage_curve = self.voltage_plot.plot([], [], pen=pg.mkPen("#2563eb", width=2))
 
         plots_layout.addWidget(self.temperature_plot, 0, 0)
         plots_layout.addWidget(self.power_plot, 0, 1)
-        plots_layout.addWidget(self.current_plot, 1, 0, 1, 2)
+        plots_layout.addWidget(self.voltage_plot, 1, 0, 1, 2)
 
         plots_group.setLayout(plots_layout)
 
@@ -317,6 +332,9 @@ class MainWindow(QWidget):
         main_layout.addLayout(content_layout)
         self.setLayout(main_layout)
         self._apply_left_panel_fonts()
+
+    def update_temperature_setpoint_line(self, value: int) -> None:
+        self.temperature_setpoint_line.setValue(value)
 
     def _apply_left_panel_fonts(self) -> None:
         scale = max(1.15, min(1.7, self.width() / 1300))
@@ -342,7 +360,7 @@ class MainWindow(QWidget):
 
         self.temperature_label.setFont(value_font)
         self.power_label.setFont(value_font)
-        self.current_label.setFont(value_font)
+        self.voltage_label.setFont(value_font)
         self.status_label.setFont(status_font)
         self.status_label.setMinimumHeight(int(78 * scale))
 
